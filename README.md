@@ -22,6 +22,8 @@ for the latest official version of the plugin.
 For instructions on using the plugin, please refer to
 [this developer guide](//firebase.google.com/docs/admob/unity/start).
 
+For a sample application demonstrating how to use Google Mobile Ads see [The HelloWorld Unity project](https://github.com/googleads/googleads-mobile-unity/tree/main/samples).
+
 Be sure to also join the developer community on
 [our forum](//groups.google.com/forum/#!categories/google-admob-ads-sdk/game-engines).
 
