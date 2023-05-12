@@ -15,6 +15,7 @@
 using System;
 
 using GoogleMobileAds.Api;
+using GoogleMobileAds.Api.AdManager;
 
 namespace GoogleMobileAds.Common
 {
@@ -26,6 +27,8 @@ namespace GoogleMobileAds.Common
         event EventHandler<LoadAdErrorClientEventArgs> OnAdFailedToLoad;
         // Ad event fired when the interstitial ad is estimated to have earned money.
         event EventHandler<AdValueEventArgs> OnPaidEvent;
+        // Ad event fired when the ad send a message to the application.
+        event EventHandler<AppEventEventArgs> OnAppEvent;
         // Ad event fired when the full screen content has failed to be presented.
         event EventHandler<AdErrorClientEventArgs> OnAdFailedToPresentFullScreenContent;
         // Ad event fired when the full screen content has been presented.
