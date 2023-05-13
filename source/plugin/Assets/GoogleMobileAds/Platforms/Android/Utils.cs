@@ -39,6 +39,9 @@ namespace GoogleMobileAds.Android
         public const string AdRequestBuilderClassName =
                 "com.google.android.gms.ads.AdRequest$Builder";
 
+        public const string AdManagerAdRequestBuilderClassName =
+                "com.google.android.gms.ads.admanager.AdManagerAdRequest$Builder";
+
         public const string AdSizeClassName = "com.google.android.gms.ads.AdSize";
 
         public const string AppOpenAdClassName =
@@ -68,6 +71,8 @@ namespace GoogleMobileAds.Android
         public const string BannerViewClassName = "com.google.unity.ads.Banner";
 
         public const string InterstitialClassName = "com.google.unity.ads.Interstitial";
+
+        public const string AdManagerInterstitialClassName = "com.google.unity.ads.UnityAdManagerInterstitialAd";
 
         public const string RewardBasedVideoClassName = "com.google.unity.ads.RewardBasedVideo";
 
@@ -276,6 +281,79 @@ namespace GoogleMobileAds.Android
             }
 
             return adRequestBuilder.Call<AndroidJavaObject>("build");
+        }
+
+        /// <summary>
+        /// Converts the plugin AdRequest or AdManagerAdRequest object to a native java proxy object
+        /// for use by the sdk.
+        /// </summary>
+        /// <param name="AdRequest">the AdRequest from the unity plugin.</param>
+        /// <param name="nativePluginVersion">the version string of the native plugin.</param>
+        public static AndroidJavaObject GetAdManagerAdRequestJavaObject(AdRequest request,
+                string nativePluginVersion = null)
+        {
+            if (!typeof(AdManagerAdRequest).IsInstanceOfType(request))
+            {
+                return GetAdRequestJavaObject(request, nativePluginVersion);
+            }
+
+            AndroidJavaObject adManagerAdRequestBuilder =
+                    new AndroidJavaObject(AdManagerAdRequestBuilderClassName);
+            foreach (string keyword in request.Keywords)
+            {
+                adManagerAdRequestBuilder.Call<AndroidJavaObject>("addKeyword", keyword);
+            }
+
+            // Denote that the request is coming from this Unity plugin.
+            adManagerAdRequestBuilder.Call<AndroidJavaObject>(
+                    "setRequestAgent",
+                    AdRequest.BuildVersionString(nativePluginVersion));
+            AndroidJavaObject bundle = new AndroidJavaObject(BundleClassName);
+            foreach (KeyValuePair<string, string> entry in request.Extras)
+            {
+                bundle.Call("putString", entry.Key, entry.Value);
+            }
+
+            bundle.Call("putString", "is_unity", "1");
+
+            // Makes ads that contain WebP ad assets ineligible.
+            bundle.Call("putString", "adw", "true");
+
+            AndroidJavaClass adMobAdapter = new AndroidJavaClass(AdMobAdapterClassName);
+            adManagerAdRequestBuilder.Call<AndroidJavaObject>(
+                "addNetworkExtrasBundle",
+                adMobAdapter,
+                bundle);
+
+            foreach (MediationExtras mediationExtra in request.MediationExtras)
+            {
+                AndroidJavaObject mediationExtrasBundleBuilder =
+                    new AndroidJavaObject(mediationExtra.AndroidMediationExtraBuilderClassName);
+                AndroidJavaObject map = new AndroidJavaObject("java.util.HashMap");
+
+                foreach (KeyValuePair<string, string> entry in mediationExtra.Extras)
+                {
+                    map.Call<AndroidJavaObject>("put", entry.Key, entry.Value);
+                }
+
+                AndroidJavaObject mediationExtras =
+                        mediationExtrasBundleBuilder.Call<AndroidJavaObject>("buildExtras", map);
+
+                if (mediationExtras != null)
+                {
+                    adManagerAdRequestBuilder.Call<AndroidJavaObject>(
+                        "addNetworkExtrasBundle",
+                        mediationExtrasBundleBuilder.Call<AndroidJavaClass>("getAdapterClass"),
+                        mediationExtras);
+
+                    adManagerAdRequestBuilder.Call<AndroidJavaObject>(
+                        "addCustomEventExtrasBundle",
+                        mediationExtrasBundleBuilder.Call<AndroidJavaClass>("getAdapterClass"),
+                        mediationExtras);
+                }
+            }
+
+            return adManagerAdRequestBuilder.Call<AndroidJavaObject>("build");
         }
 
         public static AndroidJavaObject GetJavaListObject(List<String> csTypeList)
